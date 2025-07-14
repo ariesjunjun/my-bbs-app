@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
+  --background: ivory;
   --foreground: #171717;
 }
 
@@ -26,3 +26,4 @@ body {
 }
 
 a {cursor: pointer};
+
