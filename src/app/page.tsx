@@ -17,7 +17,7 @@ export default function Home() {
   const [newPost, setNewPost] = useState(""); // 新規投稿の入力値
   const [loading, setLoading] = useState(false); // ローディング状態
   const [name, setName] = useState(""); // 名前入力フィールドの状態
-  const [editingId, setEditingId] = useState<string | null>(""); // 編集中の投稿ID
+  const [editingId, setEditingId] = useState<number | null>(null);// 編集中の投稿ID
   const [editContent, setEditContent] = useState(""); // 編集用の投稿内容
   const [editName, setEditName] = useState(""); // 編集用の名前
 
