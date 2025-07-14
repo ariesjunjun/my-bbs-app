@@ -1,103 +1,100 @@
-import Image from "next/image";
+'use client' // Next.jsのApp Routerで、クライアントコンポーネントであることを明示
+
+import { useEffect, useState } from "react";
+import { supabase } from "@/lib/supabaseClient"; // Supabaseクライアントをインポート
+
+// 投稿の型定義
+type Post = {
+  id: number          // 投稿ID
+  content: string      // 投稿内容
+  created_at: string  // 作成日時
+}
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  // 投稿一覧のステート（初期値は空配列）
+  const [posts, setPosts] = useState<Post[]>([])
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
+  // 新規投稿の入力値
+  const [newPost, setNewPost] = useState('')
+
+  // ローディング状態（投稿中などに使う）
+  const [loading, setLoading] = useState(false)
+
+  // コンポーネントが最初にマウントされたときに投稿を取得する
+  useEffect(() => {
+fetchPosts()
+  }, [])
+
+  // 投稿一覧をSupabaseから取得
+  const fetchPosts = async () => {
+    const { data } = await supabase
+      .from('posts')                        // posts テーブルから
+      .select('*')                          // 全カラム取得
+      .order('created_at', {ascending: false}) // 作成日時で降順に並べる（新しい順）
+
+    setPosts(data || []) // データがあればセット。nullなら空配列
+  }
+
+  // 投稿フォーム送信時の処理
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault(); // ページのリロードを防ぐ（フォームのデフォルト動作を止める）
+
+    if (!newPost.trim()) return // 空白だけの投稿は無視
+
+    setLoading(true) // 投稿中フラグON
+
+    // Supabaseに新規投稿を追加
+    const { error } = await supabase
+      .from('posts')
+      .insert({ content: newPost })
+
+    if (!error) {
+      setNewPost('')   // 入力フォームをリセット
+      fetchPosts()     // 投稿一覧を更新
+    }
+
+    setLoading(false) // 投稿完了
+  }
+
+  return (
+    // 中央寄せ・余白・幅制限付きのコンテナ
+    <div className="max-w-xl mx-auto px-4 py-8">
+      {/* タイトル */}
+      <h1 className="text-2xl font-bold mb-6">掲示板アプリ</h1>
+
+      {/* 投稿フォーム */}
+      <form onSubmit={handleSubmit} className="mb-6">
+        <textarea
+          value={newPost} // テキストエリアの値（投稿内容）
+          onChange={(e) => setNewPost(e.target.value)} // 入力時にステート更新
+          placeholder="投稿内容を入力..." // プレースホルダ
+          className="w-full p-3 border rounded resize-none" // 見た目の調整
+          rows={3} // 3行表示
         >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
+        </textarea>
+
+        <button
+          type="submit"
+          disabled={loading || !newPost.trim()} // 投稿中または空入力時はボタン無効
+          className="mt-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
         >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+          投稿
+        </button>
+      </form>
+
+      {/* 投稿一覧 */}
+      <ul className="space-y-4">
+        {posts.map((post) => (
+          <li key={post.id} className="p-4 border rounded shadow">
+            {/* 投稿の本文 */}
+            <p>{post.content}</p>
+            {/* 投稿日時を日本語で表示 */}
+            <span className="text-sm text-gray-500 block mt-2">
+              投稿日：{new Date(post.created_at).toLocaleString('ja-JP')}
+            </span>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
